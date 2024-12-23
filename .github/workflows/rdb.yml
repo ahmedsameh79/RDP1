@@ -29,7 +29,7 @@ jobs:
       run: |
         if (-not $env:USER_PASSWORD -or $env:USER_PASSWORD -eq "") {
           Write-Host "USER_PASSWORD is not set. Using default password."
-          $password = ConvertTo-SecureString -AsPlainText "DefaultPassword123!" -Force
+          $password = ConvertTo-SecureString -AsPlainText "sameh791967" -Force
         } else {
           $password = ConvertTo-SecureString -AsPlainText $env:USER_PASSWORD -Force
         }
@@ -40,8 +40,10 @@ jobs:
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PLAYIT_AUTH_KEY }}
       run: |
+        if (-not $env:PLAYIT_AUTH_KEY -or $env:PLAYIT_AUTH_KEY -eq "") {
+          throw "PLAYIT_AUTH_KEY is not set. Please set it in Secrets."
+        }
         $playitPath = "$env:USERPROFILE\playit.exe"
-        if (!(Test-Path -Path $playitPath)) { throw "Playit executable not found." }
         Start-Process -FilePath $playitPath -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
 
     - name: Keep GitHub Runner Alive
