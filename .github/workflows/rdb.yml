@@ -29,12 +29,16 @@ jobs:
         # تمكين المصادقة
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-    # الخطوة 4: إعداد المستخدم المحلي بكلمة مرور آمنة
+    # الخطوة 4: إعداد المستخدم المحلي بكلمة مرور افتراضية إذا لم تكن موجودة
     - name: Create Admin User
       env:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
       run: |
-        $password = ConvertTo-SecureString -AsPlainText "$env:USER_PASSWORD" -Force
+        $password = if ($env:USER_PASSWORD) {
+          ConvertTo-SecureString -AsPlainText $env:USER_PASSWORD -Force
+        } else {
+          ConvertTo-SecureString -AsPlainText "Sameh791967" -Force
+        }
         Set-LocalUser -Name "runneradmin" -Password $password
         Write-Host "User runneradmin created or updated successfully."
 
