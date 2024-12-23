@@ -35,7 +35,7 @@ jobs:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
       run: |
         $password = ConvertTo-SecureString -AsPlainText "$env:USER_PASSWORD" -Force
-        Set-LocalUser -Name "runneradmin" -Password Sameh791967
+        Set-LocalUser -Name "runneradmin" -Password $password
         Write-Host "User runneradmin created or updated successfully."
 
     # الخطوة 5: تشغيل Playit باستخدام مفتاح المصادقة
