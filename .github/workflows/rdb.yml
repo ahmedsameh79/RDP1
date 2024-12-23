@@ -8,41 +8,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # الخطوة 1: التحقق من إعدادات المستودع
     - name: Check out the repository
       uses: actions/checkout@v2
 
-    # الخطوة 2: تنزيل وتثبيت Playit
     - name: Download and Install Playit
       run: |
         $playitPath = "$env:USERPROFILE\playit.exe"
         Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile $playitPath
         if (!(Test-Path -Path $playitPath)) { throw "Playit installation failed." }
 
-    # الخطوة 3: تفعيل RDP والتأكد من جدار الحماية
     - name: Enable Remote Desktop and Firewall Rules
       run: |
-        # تفعيل RDP
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        # السماح بجدار الحماية
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        # تمكين المصادقة
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
-    # الخطوة 4: إعداد المستخدم المحلي بكلمة مرور افتراضية إذا لم تكن موجودة
     - name: Create Admin User
       env:
         USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
       run: |
-        $password = if ($env:USER_PASSWORD) {
-          ConvertTo-SecureString -AsPlainText $env:USER_PASSWORD -Force
+        if (-not $env:USER_PASSWORD -or $env:USER_PASSWORD -eq "") {
+          Write-Host "USER_PASSWORD is not set. Using default password."
+          $password = ConvertTo-SecureString -AsPlainText "DefaultPassword123!" -Force
         } else {
-          ConvertTo-SecureString -AsPlainText "Sameh791967" -Force
+          $password = ConvertTo-SecureString -AsPlainText $env:USER_PASSWORD -Force
         }
         Set-LocalUser -Name "runneradmin" -Password $password
-        Write-Host "User runneradmin created or updated successfully."
+        Write-Host "User 'runneradmin' created or updated successfully."
 
-    # الخطوة 5: تشغيل Playit باستخدام مفتاح المصادقة
     - name: Start Playit Tunnel
       env:
         PLAYIT_AUTH_KEY: ${{ secrets.PLAYIT_AUTH_KEY }}
@@ -51,8 +44,7 @@ jobs:
         if (!(Test-Path -Path $playitPath)) { throw "Playit executable not found." }
         Start-Process -FilePath $playitPath -ArgumentList "--secret $env:PLAYIT_AUTH_KEY" -NoNewWindow -Wait
 
-    # الخطوة 6: إبقاء الجلسة نشطة
     - name: Keep GitHub Runner Alive
       run: |
         Write-Host "Keeping the session alive for remote access."
-        Start-Sleep -Seconds 21600  # ست ساعات
+        Start-Sleep -Seconds 21600  # 6 ساعات
